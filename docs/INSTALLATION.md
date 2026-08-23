@@ -37,8 +37,8 @@ curl -I http://lg.example.net
 Upload or clone the release, then:
 
 ```bash
-unzip routeglass-v1.4.0-open-source-release.zip
-cd routeglass-v1.4.0-open-source-release
+unzip routeglass-v1.4.1-open-source-release.zip
+cd routeglass-v1.4.1-open-source-release
 chmod +x installer/install.sh
 sudo ./installer/install.sh
 ```
@@ -81,7 +81,11 @@ The installer asks:
 Enable BGP Lookup? [y/N]:
 ```
 
-If enabled, select exactly one backend.
+If enabled, select exactly one BGP router backend:
+
+1. MikroTik RouterOS v7
+2. Juniper Junos
+3. VyOS / FRRouting
 
 #### MikroTik
 
@@ -113,6 +117,45 @@ Path to Juniper private SSH key: /root/juniper_routeglass
 ```
 
 The private key is copied into `/etc/routeglass/ssh/juniper_routeglass` with restrictive permissions. The installer obtains and pins the router host key in `/etc/routeglass/ssh/juniper_known_hosts`.
+
+#### VyOS
+
+Provide:
+
+- VyOS router IP address or hostname
+- SSH port, default 22
+- Dedicated read-only username
+- Path to the private SSH key
+
+Example:
+
+```text
+VyOS SSH address (IP or hostname): 192.0.2.1
+VyOS SSH port [22]:
+VyOS read-only username: routeglass
+Path to VyOS private SSH key: /root/vyos_routeglass
+```
+
+The private key is copied into /etc/routeglass/ssh/vyos_routeglass with restrictive permissions. The installer obtains and pins the VyOS SSH host key in /etc/routeglass/ssh/vyos_known_hosts.
+
+RouteGlass uses SSH to execute read-only FRRouting vtysh commands and requests JSON output for route and BGP lookups. 
+
+For IPv4, RouteGlass uses:
+
+```text
+vtysh -c "show ip route TARGET json"
+vtysh -c "show bgp ipv4 unicast PREFIX json"
+```
+
+For IPv6, RouteGlass uses:
+
+```text
+vtysh -c "show ipv6 route TARGET json"
+vtysh -c "show bgp ipv6 unicast PREFIX json"
+```
+
+Only one BGP backend can be configured per RouteGlass installation.
+
 
 ### Let's Encrypt
 

@@ -1,6 +1,6 @@
 # RouteGlass v1.4.1
 
-RouteGlass is an Open Source web-based network looking glass platform for network operators. It provides Ping, MTR, Traceroute, optional downloadable test files, visitor IP visibility, and optional BGP route lookup backed by either MikroTik RouterOS v7 or Juniper Junos.
+RouteGlass is an Open Source web-based network looking glass platform for network operators. It provides Ping, MTR, Traceroute, optional downloadable test files, visitor IP visibility, and optional BGP route lookup backed by MikroTik RouterOS v7, Juniper Junos, or VyOS / FRRouting.
 
 ## Highlights
 
@@ -15,15 +15,16 @@ RouteGlass is an Open Source web-based network looking glass platform for networ
 - Select exactly one BGP backend during installation:
   - MikroTik RouterOS v7 via API-SSL
   - Juniper Junos via SSH key authentication
-- MikroTik CA validation and Juniper SSH host-key pinning
+  - VyOS / FRRouting via SSH key authentication
+- MikroTik CA validation and SSH host-key pinning for Juniper and VyOS
 - Non-root RouteGlass service with only `CAP_NET_RAW` for ICMP
 
 ## Quick Start
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-unzip routeglass-v1.4.0-open-source-release.zip
-cd routeglass-v1.4.0-open-source-release
+unzip routeglass-v1.4.1-open-source-release.zip
+cd routeglass-v1.4.1-open-source-release
 chmod +x installer/install.sh
 sudo ./installer/install.sh
 ```
@@ -42,10 +43,13 @@ Select BGP Router Backend:
 1) MikroTik RouterOS v7
    Connection: API-SSL
 
-2) Juniper JunOS
+2) Juniper Junos
    Connection: SSH key authentication
 
-Select backend [1-2]:
+3) VyOS / FRRouting
+   Connection: SSH key authentication
+
+Select backend [1-3]:
 ```
 
 Only one backend is configured per RouteGlass instance. If BGP Lookup is disabled, Ping, MTR and Traceroute remain available.
@@ -68,11 +72,20 @@ Port `22` is the default because RouteGlass is distributed as a general-purpose 
 - [Test Files](docs/TEST-FILES.md)
 - [MikroTik BGP Backend](docs/MIKROTIK.md)
 - [Juniper BGP Backend](docs/JUNIPER.md)
+- [VyOS BGP Backend](docs/VYOS.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ## License and Notices
 
 See [LICENSE](LICENSE), [NOTICE](NOTICE), [ATTRIBUTION.md](ATTRIBUTION.md), and [TRADEMARKS.md](TRADEMARKS.md).
+
+## Release Notes: v1.4.1
+
+- Added VyOS / FRRouting as a supported BGP lookup backend.
+- Added SSH key authentication and host-key verification for VyOS.
+- Added IPv4 and IPv6 route lookup support using FRRouting `vtysh` JSON output.
+- Updated the installer to support three BGP backend options.
+- Updated RouteGlass documentation for VyOS deployment and configuration.
 
 ## Release Notes: v1.4.0
 
