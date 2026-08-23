@@ -1,0 +1,23 @@
+[Unit]
+Description=RouteGlass Looking Glass
+After=network.target
+
+[Service]
+Type=simple
+User=routeglass
+Group=routeglass
+ExecStart=/opt/routeglass/bin/routeglass-server
+Restart=always
+RestartSec=3
+
+# RouteGlass remains non-root. CAP_NET_RAW is required only for ICMP ping.
+CapabilityBoundingSet=CAP_NET_RAW
+AmbientCapabilities=CAP_NET_RAW
+NoNewPrivileges=true
+
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

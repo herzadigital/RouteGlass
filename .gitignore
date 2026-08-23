@@ -1,0 +1,14 @@
+# Compiled binaries
+routeglass-server
+*.exe
+
+# Local configuration and secrets
+config.json
+mikrotik-password
+*.key
+*.pem
+*.crt
+
+# Temporary files
+*.log
+*.tmp
