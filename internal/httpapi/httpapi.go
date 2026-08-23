@@ -13,6 +13,7 @@ import (
 	"github.com/herzadigital/routeglass/internal/diagnostics"
 	"github.com/herzadigital/routeglass/internal/juniper"
 	"github.com/herzadigital/routeglass/internal/mikrotik"
+	"github.com/herzadigital/routeglass/internal/vyos"
 )
 
 type pageData struct {
@@ -134,6 +135,7 @@ func New(c config.Config) http.Handler {
 
 	var mk *mikrotik.Client
 	var jn *juniper.Client
+	var vy *vyos.Client
 	provider := ""
 	if c.MikroTik.Enabled {
 		mk = mikrotik.New(c.MikroTik)
@@ -143,9 +145,13 @@ func New(c config.Config) http.Handler {
 		jn = juniper.New(c.Juniper)
 		provider = "Juniper"
 	}
+	if c.VyOS.Enabled {
+		vy = vyos.New(c.VyOS)
+		provider = "VyOS"
+	}
 
 	lookupBGP := func(r *http.Request, target string) (mikrotik.Result, error) {
-		if mk == nil && jn == nil {
+		if mk == nil && jn == nil && vy == nil {
 			return mikrotik.Result{}, mikrotik.ErrDisabled
 		}
 		if jn != nil {
@@ -153,6 +159,12 @@ func New(c config.Config) http.Handler {
 			ctx, cancel := context.WithTimeout(r.Context(), timeout)
 			defer cancel()
 			return jn.Lookup(ctx, target)
+		}
+		if vy != nil {
+			timeout := time.Duration(c.VyOS.TimeoutSeconds) * time.Second
+			ctx, cancel := context.WithTimeout(r.Context(), timeout)
+			defer cancel()
+			return vy.Lookup(ctx, target)
 		}
 		timeout := time.Duration(c.MikroTik.TimeoutSeconds) * time.Second
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
@@ -166,7 +178,7 @@ func New(c config.Config) http.Handler {
 			return
 		}
 		_ = t.Execute(w, pageData{
-			Config: c, VisitorIP: visitorIP(r), BGPEnabled: mk != nil || jn != nil, BGPProvider: provider,
+			Config: c, VisitorIP: visitorIP(r), BGPEnabled: mk != nil || jn != nil || vy != nil, BGPProvider: provider,
 		})
 	})
 

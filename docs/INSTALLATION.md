@@ -144,3 +144,7 @@ sudo journalctl -u routeglass -f
 ## 7. Reinstallation
 
 Back up `/etc/routeglass/` before reinstalling if you need to preserve backend credentials or keys. Use a clean VM for the safest validation of a release.
+
+## VyOS
+
+Choose backend `3) VyOS` when BGP lookup is enabled. Provide the VyOS SSH address, optional port (default 22), dedicated read-only username, and private SSH key. See `VYOS.md` for the commands and security model.

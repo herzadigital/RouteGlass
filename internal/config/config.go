@@ -24,6 +24,16 @@ type JuniperConfig struct {
 	KnownHostsFile string `json:"known_hosts_file"`
 	TimeoutSeconds int    `json:"timeout_seconds"`
 }
+type VyOSConfig struct {
+	Enabled        bool   `json:"enabled"`
+	Address        string `json:"address"`
+	Port           int    `json:"port"`
+	Username       string `json:"username"`
+	PrivateKeyFile string `json:"private_key_file"`
+	KnownHostsFile string `json:"known_hosts_file"`
+	TimeoutSeconds int    `json:"timeout_seconds"`
+}
+
 type Config struct {
 	CompanyName string         `json:"company_name"`
 	ASN         string         `json:"asn"`
@@ -34,6 +44,7 @@ type Config struct {
 	RateLimit   bool           `json:"rate_limit"`
 	MikroTik    MikroTikConfig `json:"mikrotik"`
 	Juniper     JuniperConfig  `json:"juniper"`
+	VyOS        VyOSConfig     `json:"vyos"`
 }
 
 func Load(p string) (Config, error) {
@@ -47,6 +58,7 @@ func Load(p string) (Config, error) {
 	}
 	c.MikroTik.Address = strings.TrimSpace(c.MikroTik.Address)
 	c.Juniper.Address = strings.TrimSpace(c.Juniper.Address)
+	c.VyOS.Address = strings.TrimSpace(c.VyOS.Address)
 	if c.MikroTik.TimeoutSeconds <= 0 {
 		c.MikroTik.TimeoutSeconds = 8
 	}
@@ -55,6 +67,12 @@ func Load(p string) (Config, error) {
 	}
 	if c.Juniper.Port <= 0 {
 		c.Juniper.Port = 22
+	}
+	if c.VyOS.TimeoutSeconds <= 0 {
+		c.VyOS.TimeoutSeconds = 8
+	}
+	if c.VyOS.Port <= 0 {
+		c.VyOS.Port = 22
 	}
 	return c, nil
 }

@@ -81,3 +81,7 @@ See [LICENSE](LICENSE), [NOTICE](NOTICE), [ATTRIBUTION.md](ATTRIBUTION.md), and 
 - Changed the Juniper SSH default port from an environment-specific value to the standard port `22`.
 - Expanded installation, backend, security, and troubleshooting documentation for public distribution.
 - Prepared as the Open Source distribution release.
+
+## VyOS backend
+
+RouteGlass supports VyOS through SSH and FRRouting `vtysh` JSON output for IPv4 and IPv6 BGP lookups. See `docs/VYOS.md`.

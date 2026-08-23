@@ -12,7 +12,7 @@ command -v apt-get >/dev/null || fail "This installer currently supports Debian/
 [ "${ID:-}" = "ubuntu" ] || fail "Supported OS: Ubuntu. Detected: ${PRETTY_NAME:-unknown}"
 
 echo "================================================"
-echo " RouteGlass v1.4.0 - Open Source Release Installer"
+echo " RouteGlass v1.4.1 - Open Source Release Installer"
 echo " Author: Hernan Gibran Ramadhan"
 echo " Developed by PT Herza Digital Indonesia"
 echo "================================================"
@@ -39,8 +39,10 @@ fi
 read -rp "Enable BGP Lookup? [y/N]: " BGP_ENABLE
 MK_ENABLED=false
 JN_ENABLED=false
+VY_ENABLED=false
 MK_ADDR=""; MK_USER=""; MK_PASS=""; MK_CA_SOURCE=""
 JN_ADDR=""; JN_PORT="22"; JN_USER=""; JN_KEY_SOURCE=""
+VY_ADDR=""; VY_PORT="22"; VY_USER=""; VY_KEY_SOURCE=""
 if [[ "${BGP_ENABLE,,}" == "y" || "${BGP_ENABLE,,}" == "yes" ]]; then
   echo
   echo "Select BGP Router Backend:"
@@ -51,7 +53,10 @@ if [[ "${BGP_ENABLE,,}" == "y" || "${BGP_ENABLE,,}" == "yes" ]]; then
   echo "2) Juniper JunOS"
   echo "   Connection: SSH key authentication"
   echo
-  read -rp "Select backend [1-2]: " BGP_BACKEND
+  echo "3) VyOS"
+  echo "   Connection: SSH + FRRouting vtysh"
+  echo
+  read -rp "Select backend [1-3]: " BGP_BACKEND
   case "$BGP_BACKEND" in
     1)
       MK_ENABLED=true
@@ -69,7 +74,15 @@ if [[ "${BGP_ENABLE,,}" == "y" || "${BGP_ENABLE,,}" == "yes" ]]; then
       read -rp "Path to Juniper private SSH key: " JN_KEY_SOURCE
       [[ -n "$JN_ADDR" && -n "$JN_USER" && -f "$JN_KEY_SOURCE" && "$JN_PORT" =~ ^[0-9]+$ && "$JN_PORT" -ge 1 && "$JN_PORT" -le 65535 ]] || fail "Invalid Juniper configuration or SSH key file."
       ;;
-    *) fail "Invalid BGP backend selection. Choose 1 or 2." ;;
+    3)
+      VY_ENABLED=true
+      read -rp "VyOS SSH address (IP or hostname): " VY_ADDR
+      read -rp "VyOS SSH port [22]: " VY_PORT; VY_PORT="${VY_PORT:-22}"
+      read -rp "VyOS read-only username: " VY_USER
+      read -rp "Path to VyOS private SSH key: " VY_KEY_SOURCE
+      [[ -n "$VY_ADDR" && -n "$VY_USER" && -f "$VY_KEY_SOURCE" && "$VY_PORT" =~ ^[0-9]+$ && "$VY_PORT" -ge 1 && "$VY_PORT" -le 65535 ]] || fail "Invalid VyOS configuration or SSH key file."
+      ;;
+    *) fail "Invalid BGP backend selection. Choose 1, 2 or 3." ;;
   esac
 fi
 read -rp "Install Let's Encrypt SSL now? [y/N]: " SSL
@@ -130,7 +143,7 @@ import json, sys
 files=[int(x) for x in sys.argv[7].split(",") if x]
 cfg={"company_name":sys.argv[1],"asn":sys.argv[2],"location":sys.argv[3],
      "test_ipv4":sys.argv[4],"test_ipv6":sys.argv[5],
-     "rate_limit":sys.argv[6].lower()=="true","test_files":files,"mikrotik":{"enabled":False},"juniper":{"enabled":False}}
+     "rate_limit":sys.argv[6].lower()=="true","test_files":files,"mikrotik":{"enabled":False},"juniper":{"enabled":False},"vyos":{"enabled":False}}
 with open("/etc/routeglass/config.json","w") as f: json.dump(cfg,f,indent=2)
 PY
 chmod 0640 /etc/routeglass/config.json
@@ -162,6 +175,19 @@ p='/etc/routeglass/config.json'; c=json.load(open(p))
 c['juniper']={'enabled':True,'address':sys.argv[1],'port':int(sys.argv[2]),'username':sys.argv[3],'private_key_file':'/etc/routeglass/ssh/juniper_routeglass','known_hosts_file':'/etc/routeglass/ssh/juniper_known_hosts','timeout_seconds':8}
 json.dump(c,open(p,'w'),indent=2)
 PY3
+fi
+if [[ "$VY_ENABLED" == "true" ]]; then
+ install -d -m 0755 /etc/routeglass/ssh
+ install -m 0600 "$VY_KEY_SOURCE" /etc/routeglass/ssh/vyos_routeglass
+ chown -R routeglass:routeglass /etc/routeglass/ssh
+ ssh-keyscan -p "$VY_PORT" -H "$VY_ADDR" > /etc/routeglass/ssh/vyos_known_hosts 2>/dev/null || fail "Unable to retrieve VyOS SSH host key."
+ chown routeglass:routeglass /etc/routeglass/ssh/vyos_known_hosts; chmod 0644 /etc/routeglass/ssh/vyos_known_hosts
+ python3 - "$VY_ADDR" "$VY_PORT" "$VY_USER" <<'PY4'
+import json,sys
+p='/etc/routeglass/config.json'; c=json.load(open(p))
+c['vyos']={'enabled':True,'address':sys.argv[1],'port':int(sys.argv[2]),'username':sys.argv[3],'private_key_file':'/etc/routeglass/ssh/vyos_routeglass','known_hosts_file':'/etc/routeglass/ssh/vyos_known_hosts','timeout_seconds':8}
+json.dump(c,open(p,'w'),indent=2)
+PY4
 fi
 chown routeglass:routeglass /etc/routeglass/config.json
 python3 -m json.tool /etc/routeglass/config.json >/dev/null
