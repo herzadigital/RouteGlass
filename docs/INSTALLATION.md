@@ -34,11 +34,14 @@ curl -I http://lg.example.net
 
 ## 3. Install
 
-Upload or clone the release, then:
+Download and install the release:
 
 ```bash
-unzip routeglass-v1.4.2-open-source-release.zip
-cd routeglass-v1.4.2-open-source-release
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y wget unzip
+wget https://herza.id/routeglass/routeglass-v1.4.3-open-source-release.zip
+unzip routeglass-v1.4.3-open-source-release.zip
+cd routeglass-v1.4.3-open-source-release
 chmod +x installer/install.sh
 sudo ./installer/install.sh
 ```
@@ -61,7 +64,16 @@ RouteGlass installation completed successfully
 
 ### Rate limiting
 
-Enable if you want Nginx to limit repeated requests from the same source IP.
+Enable rate limiting on public installations to provide lightweight protection against repeated or automated requests from the same source IP.
+
+When enabled, RouteGlass v1.4.3 uses two independent Nginx rate-limit zones:
+
+- `routeglass_web`: 5 requests/second with burst 30 for normal web traffic.
+- `routeglass_diag`: 30 requests/minute with burst 10 for `/api/diagnostics` and `/api/bgp`.
+
+Requests exceeding the configured limit return HTTP `429 Too Many Requests`.
+
+The two zones are intentionally independent so repeated diagnostic or BGP operations do not consume the request budget used by ordinary web-interface traffic.
 
 ### Test Files
 
@@ -156,10 +168,17 @@ vtysh -c "show bgp ipv6 unicast PREFIX json"
 
 Only one BGP backend can be configured per RouteGlass installation.
 
-
-### Let's Encrypt
+### Let's Encrypt and HTTPS
 
 Choose `y` only after DNS is pointing to the VM and TCP/80 is reachable from the Internet.
+
+When HTTPS provisioning succeeds, the v1.4.3 installer enables HSTS with `max-age=31536000`. The policy intentionally does not use `includeSubDomains`.
+
+HSTS is added only after Certbot successfully provisions HTTPS. If HTTPS is skipped during installation and enabled manually later, review the Nginx security-header configuration and enable HSTS after HTTPS has been verified.
+
+The installer hardens Nginx to permit TLS 1.2 and TLS 1.3 while disabling TLS 1.0 and TLS 1.1.
+
+RouteGlass itself remains bound to `127.0.0.1:8080`. Public HTTP and HTTPS traffic should be served through Nginx rather than exposing the Go backend directly.
 
 ## 5. Post-install Verification
 

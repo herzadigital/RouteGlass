@@ -1,4 +1,4 @@
-# RouteGlass v1.4.2
+# RouteGlass v1.4.3
 
 RouteGlass is an Open Source web-based network looking glass platform for network operators. It provides Ping, MTR, Traceroute, optional downloadable test files, visitor IP visibility, and optional BGP route lookup backed by MikroTik RouterOS v7, Juniper Junos, or VyOS / FRRouting.
 
@@ -10,7 +10,8 @@ RouteGlass is an Open Source web-based network looking glass platform for networ
 - Ping, MTR and Traceroute
 - Optional Test Files with installer-defined sizes
 - Visitor public IP display
-- Optional rate limiting
+- Optional split Nginx rate limiting for web and diagnostic traffic
+- Hardened Nginx edge security with TLS 1.2/1.3, security headers, CSP, and hidden-file protection
 - One BGP Lookup option in Network Diagnostics
 - Select exactly one BGP backend during installation:
   - MikroTik RouterOS v7 via API-SSL
@@ -23,8 +24,10 @@ RouteGlass is an Open Source web-based network looking glass platform for networ
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-unzip routeglass-v1.4.2-open-source-release.zip
-cd routeglass-v1.4.2-open-source-release
+sudo apt install -y wget unzip
+wget https://herza.id/routeglass/routeglass-v1.4.3-open-source-release.zip
+unzip routeglass-v1.4.3-open-source-release.zip
+cd routeglass-v1.4.3-open-source-release
 chmod +x installer/install.sh
 sudo ./installer/install.sh
 ```
@@ -78,6 +81,19 @@ Port `22` is the default because RouteGlass is distributed as a general-purpose 
 ## License and Notices
 
 See [LICENSE](LICENSE), [NOTICE](NOTICE), [ATTRIBUTION.md](ATTRIBUTION.md), and [TRADEMARKS.md](TRADEMARKS.md).
+
+## Release Notes: v1.4.3
+
+- Hardened the default public Nginx deployment while preserving existing RouteGlass application and BGP backend behavior.
+- Restricted TLS support to TLS 1.2 and TLS 1.3 and disabled Nginx version disclosure.
+- Added HSTS after successful HTTPS provisioning, without `includeSubDomains`.
+- Added `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` security headers.
+- Added an enforced Content Security Policy using exact SHA-256 hashes for the bundled inline CSS and JavaScript.
+- Added Nginx protection against hidden-file and hidden-directory scanner probes while preserving Let's Encrypt ACME validation.
+- Added a `64k` client request-body limit and explicit reverse-proxy timeouts.
+- Hardened optional test-file delivery to permit only `GET` and `HEAD`.
+- Split optional rate limiting into independent web and diagnostic/BGP zones, returning HTTP `429` when limits are exceeded.
+- Updated installation and security documentation for the hardened v1.4.3 deployment model.
 
 ## Release Notes: v1.4.2
 

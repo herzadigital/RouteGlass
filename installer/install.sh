@@ -12,7 +12,7 @@ command -v apt-get >/dev/null || fail "This installer currently supports Debian/
 [ "${ID:-}" = "ubuntu" ] || fail "Supported OS: Ubuntu. Detected: ${PRETTY_NAME:-unknown}"
 
 echo "================================================"
-echo " RouteGlass v1.4.2 - Open Source Release Installer"
+echo " RouteGlass v1.4.3 - Open Source Release Installer"
 echo " Author: Hernan Gibran Ramadhan"
 echo " Developed by PT Herza Digital Indonesia"
 echo "================================================"
@@ -130,10 +130,12 @@ getcap "$PING_BIN" | grep -q "cap_net_raw"
 ok "Ping capability configured"
 
 RATE=false
-RATE_LINE=""
+WEB_RATE_LINE=""
+DIAG_RATE_LINE=""
 if [[ "${RL,,}" == "y" || "${RL,,}" == "yes" ]]; then
   RATE=true
-  RATE_LINE="        limit_req zone=routeglass burst=10 nodelay;"
+  WEB_RATE_LINE=$'        limit_req zone=routeglass_web burst=30 nodelay;\n        limit_req_status 429;'
+  DIAG_RATE_LINE=$'        limit_req zone=routeglass_diag burst=10 nodelay;\n        limit_req_status 429;'
 fi
 
 step "5/11 Writing RouteGlass configuration"
@@ -222,32 +224,62 @@ grep -q "0000000000002000" "/proc/$PID/status" || fail "RouteGlass service does 
 ok "RouteGlass service, loopback backend, and ICMP capability verification passed"
 
 step "8/11 Configuring Nginx"
+
+# RouteGlass Nginx security baseline.
+sed -i 's/^[[:space:]]*#*[[:space:]]*server_tokens[[:space:]][^;]*;/\tserver_tokens off;/' /etc/nginx/nginx.conf
+sed -i 's/^[[:space:]]*ssl_protocols[[:space:]].*;/\tssl_protocols TLSv1.2 TLSv1.3;/' /etc/nginx/nginx.conf
+sed -i 's/^[[:space:]]*ssl_prefer_server_ciphers[[:space:]].*;/\tssl_prefer_server_ciphers off;/' /etc/nginx/nginx.conf
+
+grep -qE '^[[:space:]]*server_tokens[[:space:]]+off;' /etc/nginx/nginx.conf || fail "Unable to configure Nginx server_tokens."
+grep -qE '^[[:space:]]*ssl_protocols[[:space:]]+TLSv1\.2[[:space:]]+TLSv1\.3;' /etc/nginx/nginx.conf || fail "Unable to configure TLS protocols."
+grep -qE '^[[:space:]]*ssl_prefer_server_ciphers[[:space:]]+off;' /etc/nginx/nginx.conf || fail "Unable to configure Nginx cipher preference."
+
+install -d -m 0755 /etc/nginx/snippets
+
+printf '%s\n' \
+'add_header X-Content-Type-Options "nosniff" always;' \
+'add_header X-Frame-Options "DENY" always;' \
+'add_header Referrer-Policy "no-referrer" always;' \
+'add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;' \
+'add_header Content-Security-Policy "default-src '\''self'\''; base-uri '\''self'\''; object-src '\''none'\''; frame-ancestors '\''none'\''; form-action '\''self'\''; img-src '\''self'\'' data:; font-src '\''self'\'' data:; style-src '\''self'\'' '\''sha256-cgoLLQ9MeU1lLfrU6mhX00KZaXphodN+43QBEnHyS30='\''; script-src '\''self'\'' '\''sha256-ebxcz1IiJ4hCxms3EQrRlUIsZNpp0krhYSJovdjBit0='\''; connect-src '\''self'\'';" always;' \
+> /etc/nginx/snippets/routeglass-security-headers.conf
+
 if [ "$RATE" = true ]; then
-cat >/etc/nginx/conf.d/routeglass-rate-limit.conf <<'EOF'
-limit_req_zone $binary_remote_addr zone=routeglass:10m rate=30r/m;
-EOF
+  printf '%s\n' \
+  '# Lightweight protection for ordinary web traffic.' \
+  'limit_req_zone $binary_remote_addr zone=routeglass_web:10m rate=5r/s;' \
+  '' \
+  '# Separate limiter for expensive diagnostic/BGP operations.' \
+  'limit_req_zone $binary_remote_addr zone=routeglass_diag:10m rate=30r/m;' \
+  > /etc/nginx/conf.d/routeglass-rate-limit.conf
 else
-rm -f /etc/nginx/conf.d/routeglass-rate-limit.conf
+  rm -f /etc/nginx/conf.d/routeglass-rate-limit.conf
 fi
 
 TEST_FILES_LOCATION=""
 if [ "${#TEST_FILES[@]}" -gt 0 ]; then
-  TEST_FILES_LOCATION=$'    location /testfiles/ {\n        alias /var/www/routeglass-testfiles/;\n        default_type application/octet-stream;\n        add_header Content-Disposition "attachment";\n    }'
+  TEST_FILES_LOCATION=$'    location /testfiles/ {\n        alias /var/www/routeglass-testfiles/;\n        default_type application/octet-stream;\n\n        include /etc/nginx/snippets/routeglass-security-headers.conf;\n        add_header Content-Disposition "attachment";\n\n        limit_except GET HEAD {\n            deny all;\n        }\n    }'
 fi
-python3 - "$ROOT/installer/routeglass.nginx.conf.template" "$DOMAIN" "$RATE_LINE" "$TEST_FILES_LOCATION" > /etc/nginx/sites-available/routeglass <<'PY'
+
+python3 - "$ROOT/installer/routeglass.nginx.conf.template" "$DOMAIN" "$WEB_RATE_LINE" "$DIAG_RATE_LINE" "$TEST_FILES_LOCATION" > /etc/nginx/sites-available/routeglass <<'PY_RENDER'
 import sys
 
-template_path, domain, rate_line, test_files_location = sys.argv[1:]
+template_path, domain, web_rate, diag_rate, test_files = sys.argv[1:]
+
 with open(template_path, "r", encoding="utf-8") as f:
     content = f.read()
 
 content = content.replace("__DOMAIN__", domain)
-content = content.replace("__RATE_LIMIT__", rate_line)
-content = content.replace("__TEST_FILES_LOCATION__", test_files_location)
+content = content.replace("__WEB_RATE_LIMIT__", web_rate)
+content = content.replace("__DIAG_RATE_LIMIT__", diag_rate)
+content = content.replace("__TEST_FILES_LOCATION__", test_files)
+
 sys.stdout.write(content)
-PY
+PY_RENDER
+
 ln -sf /etc/nginx/sites-available/routeglass /etc/nginx/sites-enabled/routeglass
 rm -f /etc/nginx/sites-enabled/default
+
 nginx -t
 systemctl enable nginx
 systemctl restart nginx
@@ -263,6 +295,14 @@ if [[ "${SSL,,}" == "y" || "${SSL,,}" == "yes" ]]; then
  read -rp "Email address for Let's Encrypt: " EMAIL
  [ -n "$EMAIL" ] || fail "Email is required for Let's Encrypt."
  certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$EMAIL" --redirect
+
+ # Enable HSTS only after HTTPS provisioning succeeds.
+ # includeSubDomains is intentionally omitted so this RouteGlass host
+ # does not impose HSTS policy on unrelated sibling subdomains.
+ if ! grep -q '^add_header Strict-Transport-Security ' /etc/nginx/snippets/routeglass-security-headers.conf; then
+   sed -i '1i add_header Strict-Transport-Security "max-age=31536000" always;' /etc/nginx/snippets/routeglass-security-headers.conf
+ fi
+
  nginx -t
  systemctl restart nginx
  ss -lnt | grep -qE '[:.]443 ' || fail "Nginx is not listening on port 443."
