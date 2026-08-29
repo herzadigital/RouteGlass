@@ -37,8 +37,8 @@ curl -I http://lg.example.net
 Upload or clone the release, then:
 
 ```bash
-unzip routeglass-v1.4.1-open-source-release.zip
-cd routeglass-v1.4.1-open-source-release
+unzip routeglass-v1.4.2-open-source-release.zip
+cd routeglass-v1.4.2-open-source-release
 chmod +x installer/install.sh
 sudo ./installer/install.sh
 ```

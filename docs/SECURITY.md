@@ -22,6 +22,10 @@ The default SSH port is `22` because RouteGlass is generic Open Source software.
 
 A public router endpoint should not be broadly exposed simply because RouteGlass can connect to it. Restrict access by source IP, ACL, firewall filter, or private transport. The RouteGlass VM should be the only permitted source whenever feasible.
 
+## Public Error Sanitization
+
+RouteGlass does not expose raw BGP backend connection errors to public visitors. Router management addresses, SSH/API ports, usernames, and transport-level failure details may appear in backend errors and are therefore retained only in the RouteGlass service log. Public BGP failures return the generic message `BGP query is temporarily unavailable...` with HTTP status `503 Service Unavailable`.
+
 ## Secrets
 
 Do not commit private SSH keys, MikroTik passwords, exported certificates containing private material, or `/etc/routeglass/` contents to Git.

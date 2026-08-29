@@ -1,4 +1,4 @@
-# RouteGlass v1.4.1
+# RouteGlass v1.4.2
 
 RouteGlass is an Open Source web-based network looking glass platform for network operators. It provides Ping, MTR, Traceroute, optional downloadable test files, visitor IP visibility, and optional BGP route lookup backed by MikroTik RouterOS v7, Juniper Junos, or VyOS / FRRouting.
 
@@ -23,8 +23,8 @@ RouteGlass is an Open Source web-based network looking glass platform for networ
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-unzip routeglass-v1.4.1-open-source-release.zip
-cd routeglass-v1.4.1-open-source-release
+unzip routeglass-v1.4.2-open-source-release.zip
+cd routeglass-v1.4.2-open-source-release
 chmod +x installer/install.sh
 sudo ./installer/install.sh
 ```
@@ -78,6 +78,14 @@ Port `22` is the default because RouteGlass is distributed as a general-purpose 
 ## License and Notices
 
 See [LICENSE](LICENSE), [NOTICE](NOTICE), [ATTRIBUTION.md](ATTRIBUTION.md), and [TRADEMARKS.md](TRADEMARKS.md).
+
+## Release Notes: v1.4.2
+
+- Hardened public BGP error handling to prevent router management details from being exposed to Looking Glass visitors.
+- BGP backend failures now return only `BGP query is temporarily unavailable...` to the public UI and API.
+- Detailed backend errors remain available in the RouteGlass service log for operator troubleshooting.
+- Public BGP backend failures now use HTTP `503 Service Unavailable`.
+- Sanitized browser-side BGP request failures so transport exception details are not rendered to visitors.
 
 ## Release Notes: v1.4.1
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
+	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -22,6 +23,8 @@ type pageData struct {
 	BGPEnabled  bool
 	BGPProvider string
 }
+
+const bgpUnavailableMessage = "BGP query is temporarily unavailable..."
 
 const page = `<!doctype html>
 <html><head>
@@ -107,7 +110,7 @@ f.addEventListener("submit",async e=>{
        row("Administrative Distance",d.distance);
      bgpResult.style.display="block";
    }else{o.textContent=d.output||"No output"}
- }catch(x){o.textContent="Request failed: "+x}
+ }catch(x){o.textContent=type==="bgp"?"BGP query is temporarily unavailable...":"Request failed"}
 });
 </script>
 </body></html>`
@@ -189,7 +192,10 @@ func New(c config.Config) http.Handler {
 		if typ == "bgp" {
 			res, err := lookupBGP(r, target)
 			if err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+				// Backend errors may contain router management IPs, SSH/API ports,
+				// usernames, or transport details. Keep those details server-side only.
+				log.Printf("BGP lookup failed for target %q via %s: %v", target, provider, err)
+				writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": bgpUnavailableMessage})
 				return
 			}
 			writeJSON(w, http.StatusOK, res)
@@ -206,9 +212,12 @@ func New(c config.Config) http.Handler {
 
 	// Backward-compatible endpoint retained for API consumers.
 	m.HandleFunc("/api/bgp", func(w http.ResponseWriter, r *http.Request) {
-		res, err := lookupBGP(r, strings.TrimSpace(r.URL.Query().Get("target")))
+		target := strings.TrimSpace(r.URL.Query().Get("target"))
+		res, err := lookupBGP(r, target)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			// Preserve diagnostic detail in the service log, never in the public API.
+			log.Printf("BGP lookup failed for target %q via %s: %v", target, provider, err)
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": bgpUnavailableMessage})
 			return
 		}
 		writeJSON(w, http.StatusOK, res)

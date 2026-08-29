@@ -12,7 +12,7 @@ command -v apt-get >/dev/null || fail "This installer currently supports Debian/
 [ "${ID:-}" = "ubuntu" ] || fail "Supported OS: Ubuntu. Detected: ${PRETTY_NAME:-unknown}"
 
 echo "================================================"
-echo " RouteGlass v1.4.1 - Open Source Release Installer"
+echo " RouteGlass v1.4.2 - Open Source Release Installer"
 echo " Author: Hernan Gibran Ramadhan"
 echo " Developed by PT Herza Digital Indonesia"
 echo "================================================"
