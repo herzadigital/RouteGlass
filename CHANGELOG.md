@@ -5,7 +5,8 @@
 - Restrict diagnostic targets to IP literals and DNS-label hostnames to prevent leading-dash argument injection.
 - Add regression tests for option-like and malformed diagnostic targets.
 - Record production CSP/frame-policy drift and remaining audit work in [Security Audit](docs/SECURITY-AUDIT-2026-11.md).
-- **Not yet built, tested in staging, released or deployed.**
+- Go unit tests and go vet passed on the separate controller build workspace (Go 1.22.2). Staging and vulnerability scanning remain pending. Not released or deployed.
+- Added a staging-only Nginx CSP baseline compatible with Cloudflare Challenge origins (requires browser validation).
 
 
 All notable changes to RouteGlass are documented in this file.
