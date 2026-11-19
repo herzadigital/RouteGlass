@@ -21,3 +21,11 @@ Prior `validTarget` rejected shell metacharacters but permitted leading dashes, 
 
 ## Deployment
 No production configuration or binary has been changed by this repository audit.
+
+## Validation update — 2026-11-19
+- On the separate Ansible controller build workspace, installed distro Go 1.22.2 and ran `go test ./...`: PASS (diagnostics regression tests passed; other packages have no test files).
+- `go vet ./...`: PASS.
+- `go list -m all`: only the RouteGlass module, no external Go module dependencies listed. Go standard-library/toolchain vulnerabilities remain in scope.
+- `govulncheck`: not yet executed; a clean `go test` result does not establish CVE-free status.
+- Draft Cloudflare CSP staging baseline: [NGINX-CLOUDFLARE-CSP-STAGING.md](NGINX-CLOUDFLARE-CSP-STAGING.md).
+- No production VM internal configuration audited or modified yet.
