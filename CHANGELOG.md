@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] - Security review 2026-11-19
+
+- Restrict diagnostic targets to IP literals and DNS-label hostnames to prevent leading-dash argument injection.
+- Add regression tests for option-like and malformed diagnostic targets.
+- Record production CSP/frame-policy drift and remaining audit work in [Security Audit](docs/SECURITY-AUDIT-2026-11.md).
+- **Not yet built, tested in staging, released or deployed.**
+
+
 All notable changes to RouteGlass are documented in this file.
 
 ## [1.4.3] - 2026-08-30
