@@ -37,3 +37,11 @@ No production configuration or binary has been changed by this repository audit.
 - A modern-toolchain rescan was attempted but failed with toolchain/language-version analysis errors. **No clean modern scan is claimed**.
 - Priority: determine the Go version embedded in each deployed RouteGlass binary with `go version -m /path/to/binary` or `go version -m` on a copy, then rebuild using a supported patched Go toolchain and rerun scan/test on staging. Do not infer production exposure from controller Go 1.22.2 alone.
 - RouteGlass group in Ansible production inventory is empty. A read-only audit playbook `/opt/herza-ansible/playbooks/audit-routeglass.yml` was created on controller and syntax-checked, but **not executed on LG-MNL or LG-KUL**. Onboard hosts and verify host-key fingerprints before running it.
+
+## Patched toolchain candidate — 2026-11-19
+- Built a **local, non-deployed** Linux/amd64 candidate with Go 1.26.11 from the security review branch snapshot `ab323978cdcf781827b31dd7461681d32c652ce8`.
+- `GOTOOLCHAIN=go1.26.11 go test ./...`: PASS.
+- `GOTOOLCHAIN=go1.26.11 go vet ./...`: PASS.
+- `govulncheck -mode=binary /tmp/routeglass-security-candidate`: **No vulnerabilities found** at scan time. This is not a guarantee of no undiscovered vulnerabilities, nor a scan of production binaries.
+- Candidate SHA-256: `bd3a72c1278fb5e08e9f57076c56c576d6e1d3dbb65f839fda57f0718700ef11`.
+- Production RouteGlass hosts not enrolled in Ansible group `routeglass`; installed binary Go version remains **NOT ASSESSED**. Do not deploy candidate until staging acceptance, runtime configuration compatibility and rollback verification.
