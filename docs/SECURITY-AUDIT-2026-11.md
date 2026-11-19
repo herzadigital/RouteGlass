@@ -29,3 +29,11 @@ No production configuration or binary has been changed by this repository audit.
 - `govulncheck`: not yet executed; a clean `go test` result does not establish CVE-free status.
 - Draft Cloudflare CSP staging baseline: [NGINX-CLOUDFLARE-CSP-STAGING.md](NGINX-CLOUDFLARE-CSP-STAGING.md).
 - No production VM internal configuration audited or modified yet.
+
+## CVE assessment update — 2026-11-19
+- Installed `govulncheck` on the separate Ansible controller and scanned the review branch using local Go 1.22.2.
+- **Result: 46 potentially reachable Go standard-library vulnerability advisories** reported by symbol analysis; 18 additional imported-package advisories and 13 module-level advisories were reported without apparent call paths. These counts concern the **test build toolchain**, not a verified inventory of deployed production binaries. Exit code 3.
+- Examples: GO-2026-6859 (`net/http`, reported fixed in Go 1.26.11), GO-2026-6809 (`crypto/x509`), GO-2024-2824 (`net`, fixed in Go 1.22.3), GO-2024-2887 (`net/netip`, fixed in Go 1.22.4).
+- A modern-toolchain rescan was attempted but failed with toolchain/language-version analysis errors. **No clean modern scan is claimed**.
+- Priority: determine the Go version embedded in each deployed RouteGlass binary with `go version -m /path/to/binary` or `go version -m` on a copy, then rebuild using a supported patched Go toolchain and rerun scan/test on staging. Do not infer production exposure from controller Go 1.22.2 alone.
+- RouteGlass group in Ansible production inventory is empty. A read-only audit playbook `/opt/herza-ansible/playbooks/audit-routeglass.yml` was created on controller and syntax-checked, but **not executed on LG-MNL or LG-KUL**. Onboard hosts and verify host-key fingerprints before running it.
