@@ -13,10 +13,30 @@ func validTarget(t string) bool {
 	if t == "" || len(t) > 253 {
 		return false
 	}
-	if net.ParseIP(t) != nil {
+	if ip := net.ParseIP(t); ip != nil {
 		return true
 	}
-	return !strings.ContainsAny(t, " /\\;&|`$()<>\"'")
+	// Targets are passed to external diagnostic programs. Restrict hostnames
+	// to DNS labels so user input cannot be interpreted as command options.
+	// In particular, a leading dash must never reach ping/mtr/traceroute.
+	if strings.HasSuffix(t, ".") {
+		t = strings.TrimSuffix(t, ".")
+	}
+	if t == "" {
+		return false
+	}
+	for _, label := range strings.Split(t, ".") {
+		if len(label) == 0 || len(label) > 63 || label[0] == '-' || label[len(label)-1] == '-' {
+			return false
+		}
+		for _, ch := range label {
+			if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+				(ch >= '0' && ch <= '9') || ch == '-') {
+				return false
+			}
+		}
+	}
+	return true
 }
 func Run(kind, target string) (string, error) {
 	if !validTarget(target) {
