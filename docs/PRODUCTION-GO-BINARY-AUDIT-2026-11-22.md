@@ -69,3 +69,24 @@ Other eight production hosts remain on Go 1.22.2. Source tree hash checks show e
 ## Local-backup rollout update — 22 November 2026 (third host)
 
 LG-Kalibata: application backup created at `/root/herza-app-recovery/20261122T032113Z/app-recovery.tar.gz`, SHA-256 verified, previous production binary preserved at `binary-before-pilot`. Local source tree code hash matches Cyber1/Tifa, but exact historic build provenance remains unproven. Isolated candidate rebuilt with Go 1.26.11 and x/crypto v0.59.0; `go test`, `go vet`, and `govulncheck -mode=binary` passed (`No vulnerabilities found`). Canary HTTP `/` 200, `/api/client-ip` 200, `/api/diagnostics` without parameters 400. Deployed candidate binary SHA-256 `4c6cf0d7ba9b8b032e595880e668914a776eb5e082cc9e9524b4c737b70f26e4`; NGINX and Looking Glass active and public HTTPS loopback checks passed after restart. Local root filesystem ~91% used with ~1.4 GiB available following build; avoid uncontrolled parallel Go builds or filling root. **Total Go production security deployments now 3/10**: LG-Cyber1, LG-KUL, LG-Kalibata. Other seven still require site-specific build, backup, scan and functional acceptance. Local backup is not an off-host DR solution. v1.4.5 is not released.
+
+## Production Go rollout completed — 22 November 2026
+
+**All 10/10 production Looking Glass binary replacements completed and independently rechecked.** Each service returned HTTPS homepage HTTP 200 and `/api/client-ip` HTTP 200; both NGINX and herza-lookingglass are active. Original binaries and local application recovery archives retained. User explicitly approved local backup instead of off-host backup. This does not establish off-host DR or a successful restore exercise.
+
+| Host | Production binary SHA-256 | Candidate verification |
+| --- | --- | --- |
+| LG-Cyber1 | `1df7495995b97c4b60927bc4892d5552dc0681078938d36eec266ab43fb52746` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+| LG-Kalibata | `4c6cf0d7ba9b8b032e595880e668914a776eb5e082cc9e9524b4c737b70f26e4` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+| LG-Tifa | `5265d2b4db6ee1656bde26a71680d21971387d6d3f81e59f6fdb8c4288a468fb` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+| LG-Cibitung | `e3af7ad7698c13012417d8e49115546140eeec0a68064d142a3c8822df4b6423` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+| LG-SUB1 | `2ff6f49e48d0758ad7398137568adea168aaf8f8e2c9ab63092fd039dfb128aa` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+| LG-SUB2 | `2ff6f49e48d0758ad7398137568adea168aaf8f8e2c9ab63092fd039dfb128aa` | Same independently built and scanned candidate as SUB1 |
+| LG-NCIX | `5bc09cf598a99a7fed9993354a0b1023037535c419d4dbb794cc7506850b4e7f` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+| LG-SG | `2ff6f49e48d0758ad7398137568adea168aaf8f8e2c9ab63092fd039dfb128aa` | Exact SHA-256 copy of scanned SUB1/SUB2 binary; SG lacks Go/source locally |
+| LG-KUL | `240187461d08896aa54e3b297a9793c0a6282b633aaf32da6fdda2915bb41cd1` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+| LG-MNL | `b2fbbbf1db3e562a484372d26ef9976b0cb4d21b6e561b1a6c0ccd07de2cf748` | Go 1.26.11 / crypto 0.59, binary govulncheck clear |
+
+For the seven new rollouts, isolated source copies were updated and `go test ./...`, `go vet ./...`, `go build`, `govulncheck -mode=binary` and isolated canary endpoint tests passed on Tifa, Cibitung, SUB1, SUB2, NCIX and MNL. SG used the exact matching SUB1/SUB2 binary (same original binary hash on all three) with verified transfer checksum. Temporary TCP 18765 transfer server and restricted UFW rule on SUB1 were removed immediately after transfer. Production service binaries were replaced atomically with preserved rollback copies and health-check-driven rollback on failure.
+
+**Outstanding acceptance/limitations:** Real BGP lookup across all logical systems and end-to-end traceroute/MTR not fully tested; no reboot persistence test, actual rollback exercise, or off-host disaster recovery. LG-Kalibata root filesystem ~91% full (1.4 GiB free). No claim that all security vulnerabilities are impossible; govulncheck reported no known matching issues for these candidates at scan time. The upstream GitHub repository's source module differs from production source trees, so this rollout **is not** a verified GitHub v1.4.5 release. Do not tag v1.4.5 stable until source provenance, changelog and functional acceptance are completed.
