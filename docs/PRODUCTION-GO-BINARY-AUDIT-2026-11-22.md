@@ -54,3 +54,14 @@ Read-only local API smoke checks of the **currently deployed** service:
 - Exact production source-to-binary revision parity remains unproven. Source trees have no local Git history. Do not assign v1.4.5 to these production binaries.
 
 **Release blocker:** an approved encrypted off-host backup target, restore test, and end-to-end staging validation are still needed before changing production binary. No secrets or recovery archives have been committed to GitHub.
+
+## Production Go security pilot — 22 November 2026 (local-backup exception)
+
+User approved **local backup first** instead of off-host backup. This is an accepted temporary risk, **not** off-host disaster recovery or tested restore.
+
+Two pilot production services have been updated to isolated Go 1.26.11 / x/crypto v0.59.0 candidate binaries after local archive checksum validation, canary HTTP checks, and pre-change binary copy:
+- **LG-Cyber1:** deployed binary SHA-256 `1df7495995b97c4b60927bc4892d5552dc0681078938d36eec266ab43fb52746`. Canary on loopback port 18080 returned `/` 200, `/api/client-ip` 200, `/api/diagnostics` without parameters 400. After atomic binary replacement and systemd restart, production `/` 200 and `/api/client-ip` 200, services active. Real `ping` API to `1.1.1.1` returned successful replies; invalid option-like target `-I` returned HTTP 400. Rollback binary: `/root/herza-app-recovery/20261122T024836Z/binary-before-pilot`.
+- **LG-KUL:** deployed binary SHA-256 `240187461d08896aa54e3b297a9793c0a6282b633aaf32da6fdda2915bb41cd1`. Canary loopback port 18080 returned `/api/health` 200, `/api/client-ip` 200, `/api/diagnostics` without parameters 400; bare `/` 404 at the Go backend, whereas NGINX serves the public homepage as HTTP 200. After atomic binary replacement and systemd restart, production homepage, health, client-IP endpoints and service checks passed. Rollback binary: `/root/herza-app-recovery/20261122T024844Z/binary-before-pilot`.
+- **No rollback was actually exercised**; rollback binaries are retained. No full BGP authentication/diagnostic acceptance has been completed. LG-Cyber1 historical journal showed TELKOM BGP SSH authentication failure on Nov 18, prior to this pilot; this needs separate investigation.
+
+Other eight production hosts remain on Go 1.22.2. Source tree hash checks show exact source code parity between Cyber1, Kalibata and Tifa; KUL and MNL also match. Cibitung, SUB1/SUB2, NCIX have distinct source/build variants requiring per-host rebuild and functional checks; SG binary hash equals SUB1/SUB2 but local source was not found. **Do not label all ten as patched or publish v1.4.5 Stable yet.**
