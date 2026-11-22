@@ -1,13 +1,15 @@
 # Changelog
 
-## [Unreleased] - NGINX CVE triage 2026-11-22
+> Versions 1.4.4 and 1.4.5 below are proposed release milestones documented on the security review branch. No GitHub release/tag or production deployment is implied.
+
+## [1.4.5] - 2026-11-22 (planned; not released) — NGINX CVE triage
 
 - Audited NGINX package versions across 10 RouteGlass production VMs: all observed on Ubuntu NGINX `1.24.0-2ubuntu7.17` before patching; privileged patch rollout remains blocked by non-sudo audit credentials.
 - Documented Ubuntu security advisory requirements, HTTP/2, HTTP/3, DNS resolver, mail proxy and additional November CVE applicability checks, and staged backup/rollback procedures in [NGINX CVE response](docs/NGINX-CVE-RESPONSE-2026-11-22.md).
 - Identified source mismatch: sampled production binaries report `github.com/herzadigital/herza-lookingglass-vyos` (Go 1.22.2), not this repository's `github.com/herzadigital/routeglass`. Do not deploy this repository's binary as a replacement without source mapping and staging verification.
 - **No production package or binary changes have been deployed by this review.**
 
-## [Unreleased] - Security review 2026-11-19
+## [1.4.4] - 2026-11-19 (planned; not released) — Security review
 
 - Restrict diagnostic targets to IP literals and DNS-label hostnames to prevent leading-dash argument injection.
 - Add regression tests for option-like and malformed diagnostic targets.
