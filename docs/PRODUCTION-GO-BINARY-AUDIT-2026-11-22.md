@@ -43,3 +43,14 @@ These archives **contain credentials/secrets** and must not be published to GitH
 Isolated staging copies, not active production binary paths, were built using **Go 1.26.11** and upgraded `golang.org/x/crypto v0.59.0`, `golang.org/x/sys v0.50.0`. On both pilot hosts, `go test ./...`, `go vet ./...`, and `go build` passed. Binary-mode `govulncheck v1.10.0` returned **No vulnerabilities found** on both patched candidates using its database updated 2026-11-11. Candidate paths: `/root/herza-security-staging/cyber1-patched` and `/root/herza-security-staging/kul-patched`. Neither was deployed or run as the production service. This scanner result is not a guarantee against all vulnerabilities.
 
 The original source rebuilt with Go 1.26.11 but without updating x/crypto still reported 11 matching-symbol findings in both variants, demonstrating that upgrading the Go toolchain alone was insufficient. Application-level regression and functional tests are still missing; source revision parity, complete credential-safe off-host backup, and tested rollback remain **release gates**.
+
+## Follow-up validation — 22 November 2026
+
+Read-only local API smoke checks of the **currently deployed** service:
+- LG-Cyber1: `/` 200, `/api/client-ip` 200, `/api/diagnostics` with no parameters 400; `/api/health` and `/api/lookup` 404 (not routes of this Juniper variant).
+- LG-KUL: `/` 200, `/api/health` 200, `/api/client-ip` 200, `/api/diagnostics` without parameters 400, `/api/lookup` without parameters 400 (VyOS variant).
+- This is **not** a functional acceptance of the new candidate builds or real network diagnostics. Do not treat the 404s on Juniper as service failures when routes are absent by design.
+- Both pilot app recovery archives were re-hashed locally: Cyber1 `7b7a12440a84ca2613c8c2967872aac1a7d71ba044ba5b9e0f9131927857210d`; KUL `5ab531766e48cd5e62f0ae99f74cb76b79fe653745e8f0a7a49ab8e6eabdee18`. **Neither is off-host**. Source copies and patched candidates remain on the respective production host in separate staging directories; neither is deployed.
+- Exact production source-to-binary revision parity remains unproven. Source trees have no local Git history. Do not assign v1.4.5 to these production binaries.
+
+**Release blocker:** an approved encrypted off-host backup target, restore test, and end-to-end staging validation are still needed before changing production binary. No secrets or recovery archives have been committed to GitHub.
