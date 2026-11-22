@@ -30,3 +30,16 @@ Using `govulncheck v1.10.0` with vulnerability DB updated 2026-11-11:
 3. Back up binary, configuration and credentials securely off-host, verify integrity and restoration. Prepare service rollback.
 4. Run staging end-to-end ping/traceroute/BGP and browser tests, then one-host pilot; roll out gradually with per-host acceptance and rollback.
 5. Re-scan every distinct binary build, verify NGINX and app health, and record versioned release evidence.
+
+## Follow-up — recovered local source and isolated candidate builds
+
+On LG-Cyber1, a local source tree was recovered at `/root/herza-lookingglass-src` (module `herza-lookingglass`, x/crypto v0.31.0). On LG-KUL, a local source tree was recovered at `/root/herza-lookingglass-vyos` (module `github.com/herzadigital/herza-lookingglass-vyos`, x/crypto v0.24.0). Both pass `go test ./...` with no test files; exact correspondence to installed binary source revisions has **not** been proven. No repository provenance or Git commit is available in these source directories.
+
+Local root-only full-application recovery archives were created and integrity-tested on the two pilot hosts (including deployed binary, `/etc/herza-lookingglass`, systemd unit and local source):
+- LG-Cyber1: `/root/herza-app-recovery/20261122T024836Z/app-recovery.tar.gz` (approximately 28 MB)
+- LG-KUL: `/root/herza-app-recovery/20261122T024844Z/app-recovery.tar.gz` (approximately 9.3 MB)
+These archives **contain credentials/secrets** and must not be published to GitHub or moved to an untrusted destination. No off-host backup or restore test has yet been confirmed.
+
+Isolated staging copies, not active production binary paths, were built using **Go 1.26.11** and upgraded `golang.org/x/crypto v0.59.0`, `golang.org/x/sys v0.50.0`. On both pilot hosts, `go test ./...`, `go vet ./...`, and `go build` passed. Binary-mode `govulncheck v1.10.0` returned **No vulnerabilities found** on both patched candidates using its database updated 2026-11-11. Candidate paths: `/root/herza-security-staging/cyber1-patched` and `/root/herza-security-staging/kul-patched`. Neither was deployed or run as the production service. This scanner result is not a guarantee against all vulnerabilities.
+
+The original source rebuilt with Go 1.26.11 but without updating x/crypto still reported 11 matching-symbol findings in both variants, demonstrating that upgrading the Go toolchain alone was insufficient. Application-level regression and functional tests are still missing; source revision parity, complete credential-safe off-host backup, and tested rollback remain **release gates**.
