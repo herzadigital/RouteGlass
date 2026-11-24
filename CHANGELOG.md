@@ -2,12 +2,15 @@
 
 > Versions 1.4.4 and 1.4.5 below are proposed release milestones documented on the security review branch. No GitHub release/tag or production deployment is implied.
 
-## [1.4.5] - 2026-11-22 (planned; not released) — NGINX CVE triage
+## [1.4.5] - 2026-11-24 (unreleased)
 
-- Audited NGINX package versions across 10 RouteGlass production VMs: all observed on Ubuntu NGINX `1.24.0-2ubuntu7.17` before patching; privileged patch rollout remains blocked by non-sudo audit credentials.
-- Documented Ubuntu security advisory requirements, HTTP/2, HTTP/3, DNS resolver, mail proxy and additional November CVE applicability checks, and staged backup/rollback procedures in [NGINX CVE response](docs/NGINX-CVE-RESPONSE-2026-11-22.md).
-- Identified source mismatch: sampled production binaries report `github.com/herzadigital/herza-lookingglass-vyos` (Go 1.22.2), not this repository's `github.com/herzadigital/routeglass`. Do not deploy this repository's binary as a replacement without source mapping and staging verification.
-- **No production package or binary changes have been deployed by this review.**
+### Production validation
+- Updated production NGINX to Ubuntu package 1.24.0-2ubuntu7.21 and Go binaries to Go 1.26.11; production dependencies include golang.org/x/crypto v0.59.0.
+- Replaced Juniper text route parsing with structured XML in production variants, isolating active route attributes from advertised metrics and rejecting RPC/SSH errors.
+- Validated TELKOM local preference 220, actual AS path and communities, static routes, IPv6 and no-route responses on Cyber1.
+- Deployed XML parser to all eight Juniper LGs; final BGP, traceroute, MTR and service smoke tests passed on all ten production LGs, including both VyOS nodes.
+- Source and binary vulnerability scans passed for Cyber1 candidate; remaining Juniper candidate binaries passed binary scans.
+- Public repository source reconciliation, installer and all-backend release QA remain required. Production deployment is not proof of public release equivalence. No stable tag or package published yet.
 
 ## [1.4.4] - 2026-11-19 (planned; not released) — Security review
 
