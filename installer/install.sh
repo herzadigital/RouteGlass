@@ -12,7 +12,7 @@ command -v apt-get >/dev/null || fail "This installer currently supports Debian/
 [ "${ID:-}" = "ubuntu" ] || fail "Supported OS: Ubuntu. Detected: ${PRETTY_NAME:-unknown}"
 
 echo "================================================"
-echo " RouteGlass v1.4.3 - Open Source Release Installer"
+echo " RouteGlass v1.4.5 - Release Candidate Installer"
 echo " Author: Hernan Gibran Ramadhan"
 echo " Developed by PT Herza Digital Indonesia"
 echo "================================================"
@@ -118,7 +118,7 @@ ok "User and directories ready"
 
 step "3/11 Building RouteGlass"
 cd "$ROOT"
-go build -o /opt/routeglass/bin/routeglass-server ./cmd/routeglass-server
+GOTOOLCHAIN=go1.26.11 go build -o /opt/routeglass/bin/routeglass-server ./cmd/routeglass-server
 [ -x /opt/routeglass/bin/routeglass-server ] || fail "RouteGlass binary was not created."
 chown routeglass:routeglass /opt/routeglass/bin/routeglass-server
 ok "RouteGlass binary built"

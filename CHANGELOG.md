@@ -1,5 +1,26 @@
 # Changelog
 
+> Versions 1.4.4 and 1.4.5 below are proposed release milestones documented on the security review branch. No GitHub release/tag or production deployment is implied.
+
+## [1.4.5] - 2026-11-24 (unreleased)
+
+### Production validation
+- Updated production NGINX to Ubuntu package 1.24.0-2ubuntu7.21 and Go binaries to Go 1.26.11; production dependencies include golang.org/x/crypto v0.59.0.
+- Replaced Juniper text route parsing with structured XML in production variants, isolating active route attributes from advertised metrics and rejecting RPC/SSH errors.
+- Validated TELKOM local preference 220, actual AS path and communities, static routes, IPv6 and no-route responses on Cyber1.
+- Deployed XML parser to all eight Juniper LGs; final BGP, traceroute, MTR and service smoke tests passed on all ten production LGs, including both VyOS nodes.
+- Source and binary vulnerability scans passed for Cyber1 candidate; remaining Juniper candidate binaries passed binary scans.
+- Public repository source reconciliation, installer and all-backend release QA remain required. Production deployment is not proof of public release equivalence. No stable tag or package published yet.
+
+## [1.4.4] - 2026-11-19 (planned; not released) — Security review
+
+- Restrict diagnostic targets to IP literals and DNS-label hostnames to prevent leading-dash argument injection.
+- Add regression tests for option-like and malformed diagnostic targets.
+- Record production CSP/frame-policy drift and remaining audit work in [Security Audit](docs/SECURITY-AUDIT-2026-11.md).
+- Go unit tests and go vet passed on the separate controller build workspace (Go 1.22.2). Binary-mode govulncheck on a Go 1.26.11 local candidate returned no vulnerabilities; staging acceptance remains pending. Not released or deployed.
+- Added a staging-only Nginx CSP baseline compatible with Cloudflare Challenge origins (requires browser validation).
+
+
 All notable changes to RouteGlass are documented in this file.
 
 ## [1.4.3] - 2026-08-30

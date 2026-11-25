@@ -60,3 +60,7 @@ After installation:
 ```bash
 curl -sS 'http://127.0.0.1:8080/api/diagnostics?type=bgp&target=1.1.1.1'
 ```
+
+## Structured route output (v1.4.5 candidate)
+
+The Junos backend queries `show route ADDRESS extensive | display xml | no-more`. Verify that the dedicated read-only account can execute this command. Route attributes are taken from the selected route entry rather than advertised metrics. RPC errors are returned as errors, not successful lookups. The public backend uses the account's routing context; production multi-logical-system configurations are not implied by this installer.
